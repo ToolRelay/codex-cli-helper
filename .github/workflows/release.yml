@@ -93,22 +93,7 @@ jobs:
           python -m PyInstaller --clean --noconfirm --onefile
           --name codex-cli-helper src/codex_cli_helper/__main__.py
       - name: Name executable and create checksum
-        env:
-          ASSET_NAME: ${{ matrix.asset }}
-        run: |
-          python - <<'PY'
-          import hashlib
-          import os
-          import shutil
-          from pathlib import Path
-
-          source = Path("dist") / ("codex-cli-helper.exe" if os.name == "nt" else "codex-cli-helper")
-          target = Path("dist") / os.environ["ASSET_NAME"]
-          if source != target:
-              shutil.move(source, target)
-          digest = hashlib.sha256(target.read_bytes()).hexdigest()
-          Path(str(target) + ".sha256").write_text(f"{digest}  {target.name}\n", encoding="utf-8")
-          PY
+        run: python scripts/prepare_release_asset.py --asset-name "${{ matrix.asset }}"
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
