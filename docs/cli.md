@@ -9,9 +9,13 @@ Scriptable local tools for the Codex app-server.
 ## Table of Contents
 
 - [`start-task`](#codex-cli-helper-start-task)
+- [`list-tasks`](#codex-cli-helper-list-tasks)
+- [`delete-task`](#codex-cli-helper-delete-task)
 
 **Commands**:
 
+* [`delete-task`](#codex-cli-helper-delete-task): Permanently delete a durable Codex task through the app-server.
+* [`list-tasks`](#codex-cli-helper-list-tasks): List durable Codex tasks known to the app-server.
 * [`start-task`](#codex-cli-helper-start-task): Create a durable Codex thread and start its first turn.
 
 ## codex-cli-helper start-task
@@ -40,5 +44,49 @@ API key. The task continues in the daemon after this process exits.
 * `--runtime-workspace-root`: Runtime workspace root; repeat for additional roots (defaults to --cwd). *[default: ()]*
 * `--model-provider`: Optional model provider identifier.
 * `--allow-provider-model-fallback, --no-allow-provider-model-fallback`: *[default: False]*
+* `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
+* `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
+
+## codex-cli-helper list-tasks
+
+```console
+codex-cli-helper list-tasks [OPTIONS]
+```
+
+List durable Codex tasks known to the app-server.
+
+**Parameters**:
+
+* `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
+* `--limit`: Maximum number of tasks to return. *[default: 100]*
+* `--cursor`: Continue from a cursor returned by a previous page.
+* `--cwd`: Only return tasks whose working directory matches this path.
+* `--archived`: *[choices: active, archived]* *[default: active]*
+* `--search-term`: Search task names and previews.
+* `--project-id`: Filter by Codex project identifier.
+* `--section-id`: Filter by project section identifier.
+* `--parent-thread-id`: Filter to direct child tasks of this thread.
+* `--ancestor-thread-id`: Filter to descendants of this thread.
+* `--sort-key`: *[choices: created_at, updated_at, recency_at, section_position]*
+* `--sort-direction`: *[choices: asc, desc]*
+* `--source-kind`: Filter by source kind; repeat for multiple kinds. *[choices: cli, vscode, exec, appServer, subAgent, subAgentReview, subAgentCompact, subAgentThreadSpawn, subAgentOther, unknown]* *[default: ()]*
+* `--include-non-interactive, --no-include-non-interactive`: Include exec and other non-interactive task sources. *[default: False]*
+* `--state-db-only, --no-state-db-only`: Read only the app-server state database. *[default: False]*
+* `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
+* `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
+
+## codex-cli-helper delete-task
+
+```console
+codex-cli-helper delete-task --thread-id STR [OPTIONS]
+```
+
+Permanently delete a durable Codex task through the app-server.
+
+**Parameters**:
+
+* `--thread-id`: Identifier of the task to delete. **[required]**
+* `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
+* `--yes, --no-yes`: Confirm permanent deletion. *[default: False]*
 * `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
 * `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*

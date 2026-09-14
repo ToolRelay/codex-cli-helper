@@ -33,6 +33,22 @@ class StartedTask:
         }
 
 
+@dataclass(frozen=True)
+class ListedTasks:
+    """A page of task summaries returned by the app-server."""
+
+    data: list[dict[str, Any]]
+    next_cursor: str | None = None
+    backwards_cursor: str | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "tasks": self.data,
+            "nextCursor": self.next_cursor,
+            "backwardsCursor": self.backwards_cursor,
+        }
+
+
 class CodexAppServer:
     """Small JSON-RPC client that performs the Codex initialization handshake."""
 
@@ -175,3 +191,63 @@ class CodexAppServer:
         if turn_id is not None and not isinstance(turn_id, str):
             raise AppServerError("turn/start returned an invalid turn id")
         return StartedTask(thread_id, turn_id, str(cwd), model)
+
+    def list_tasks(
+        self,
+        *,
+        limit: int,
+        cursor: str | None,
+        cwd: Path | None,
+        archived: bool,
+        search_term: str | None,
+        project_id: str | None,
+        section_id: str | None,
+        parent_thread_id: str | None,
+        ancestor_thread_id: str | None,
+        sort_key: str | None,
+        sort_direction: str | None,
+        source_kinds: list[str] | None,
+        use_state_db_only: bool,
+    ) -> ListedTasks:
+        """List task summaries using the app-server's thread/list method."""
+
+        if parent_thread_id and ancestor_thread_id:
+            raise AppServerError("parent-thread-id and ancestor-thread-id are mutually exclusive")
+        params: dict[str, Any] = {
+            "limit": limit,
+            "archived": archived,
+            "useStateDbOnly": use_state_db_only,
+        }
+        optional = {
+            "cursor": cursor,
+            "cwd": str(cwd) if cwd is not None else None,
+            "searchTerm": search_term,
+            "projectId": project_id,
+            "sectionId": section_id,
+            "parentThreadId": parent_thread_id,
+            "ancestorThreadId": ancestor_thread_id,
+            "sortKey": sort_key,
+            "sortDirection": sort_direction,
+        }
+        params.update({key: value for key, value in optional.items() if value is not None})
+        if source_kinds:
+            params["sourceKinds"] = source_kinds
+        result = self._request("thread/list", params)
+        data = result.get("data")
+        if not isinstance(data, list) or not all(isinstance(item, dict) for item in data):
+            raise AppServerError("thread/list returned an invalid data page")
+        return ListedTasks(
+            data=data,
+            next_cursor=result.get("nextCursor") if isinstance(result.get("nextCursor"), str) else None,
+            backwards_cursor=(
+                result.get("backwardsCursor")
+                if isinstance(result.get("backwardsCursor"), str)
+                else None
+            ),
+        )
+
+    def delete_task(self, thread_id: str) -> dict[str, Any]:
+        """Permanently delete a task through the app-server."""
+
+        self._request("thread/delete", {"threadId": thread_id})
+        return {"threadId": thread_id, "deleted": True}
