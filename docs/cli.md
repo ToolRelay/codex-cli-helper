@@ -4,7 +4,7 @@
 codex-cli-helper COMMAND
 ```
 
-Start durable, visible Codex app-server tasks from a local CLI.
+Scriptable local tools for the Codex app-server.
 
 ## Table of Contents
 

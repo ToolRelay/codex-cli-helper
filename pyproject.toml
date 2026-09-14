@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "codex-cli-helper"
 version = "0.1.0"
-description = "Small local CLI for starting durable Codex app-server tasks"
+description = "Small local Python toolkit for Codex app-server workflows"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -1,4 +1,4 @@
-"""Command-line entry point for starting durable local Codex tasks."""
+"""Command-line entry point for the Codex app-server toolkit."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from codex_cli_helper.client import AppServerError, CodexAppServer
 app = App(
     name="codex-cli-helper",
     version=__version__,
-    help="Start durable, visible Codex app-server tasks from a local CLI.",
+    help="Scriptable local tools for the Codex app-server.",
 )
 
 
@@ -68,7 +68,7 @@ def start_task(
     Parameters
     ----------
     cwd:
-        Absolute repository or worktree path where the task should run.
+        Absolute project directory where the task should run.
     prompt:
         Complete initial instructions for the task.
     """

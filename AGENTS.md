@@ -1,17 +1,22 @@
-# Codex CLI Helper
+# Contributor instructions
 
-This private ToolRelay repository contains a deliberately thin Python CLI for
-starting durable Codex app-server tasks on the local machine. It is an adapter
-around the installed Codex daemon, not a replacement orchestrator.
+This repository contains a small Python command-line package. Keep the code
+modular, typed, and easy to extend as additional commands are introduced.
 
-## Boundaries
+## Engineering rules
 
-- Keep the CLI focused on creating a thread and starting its first turn.
-- Use the local Unix app-server socket and the daemon's existing authentication; never embed API keys or credentials.
-- Do not add GitHub, Outline, Project-state, scheduler, or SQLite orchestration logic here.
-- Preserve exact user-supplied model and workspace settings; do not silently fall back.
-- New task code must remain compatible with isolated Git worktrees and must not modify a caller's repository.
+- Use Python 3.11+ and keep runtime dependencies narrowly scoped.
+- Never embed credentials, API keys, or machine-specific secrets in source,
+  tests, fixtures, generated documentation, or examples.
+- Preserve caller-supplied values and surface protocol errors; do not silently
+  substitute models, transports, or configuration.
+- Keep transport/protocol code separate from command parsing and presentation.
+- Add focused tests for new behavior and avoid unrelated refactors.
+- Keep generated CLI documentation synchronized with typed signatures and
+  docstrings.
 
-## Development
+## Validation
 
-Use Python 3.11+ and the project environment. Run `pytest`, `python -m codex_cli_helper --help`, and regenerate the CLI documentation before committing. Keep generated docs synchronized with the typed command signature.
+Before committing, run the test suite, compile the package, check `--help`, and
+regenerate the CLI documentation. Keep commits focused and explain any
+version-sensitive protocol assumptions in the code or documentation.
