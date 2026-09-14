@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import tempfile
+from importlib.resources import files as resource_files
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Annotated, Literal
 
@@ -38,6 +43,7 @@ ALL_SOURCE_KINDS: tuple[SourceKind, ...] = (
     "subAgentOther",
     "unknown",
 )
+SKILL_NAME = "codex-cli-helper"
 
 
 app = App(
@@ -265,6 +271,71 @@ def delete_task(
         print(json.dumps(result, sort_keys=True))
     else:
         print(f"Deleted Codex task {thread_id}")
+
+
+def _copy_resource_tree(source: Traversable, destination: Path) -> None:
+    """Copy an importlib.resources tree into a filesystem directory."""
+
+    destination.mkdir(parents=True, exist_ok=True)
+    for child in source.iterdir():
+        target = destination / child.name
+        if child.is_dir():
+            _copy_resource_tree(child, target)
+        else:
+            target.write_bytes(child.read_bytes())
+
+
+@app.command
+def install_skill(
+    *,
+    directory: Annotated[
+        Path,
+        Parameter(
+            name="--directory",
+            help="Parent directory in which to install the bundled skill.",
+        ),
+    ],
+    force: Annotated[
+        bool,
+        Parameter(help="Replace an existing codex-cli-helper skill directory."),
+    ] = False,
+    json_output: Annotated[
+        bool,
+        Parameter(name="--json", help="Print machine-readable JSON instead of human text."),
+    ] = False,
+) -> None:
+    """Install the bundled Codex skill under a selected skills directory."""
+
+    directory = directory.expanduser().resolve()
+    destination = directory / SKILL_NAME
+    if destination.exists() and not force:
+        raise SystemExit(
+            f"error: skill already exists at {destination}; pass --force to replace it"
+        )
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        if not directory.is_dir():
+            raise SystemExit(f"error: --directory is not a directory: {directory}")
+        source = resource_files("codex_cli_helper").joinpath("skill")
+        if not source.is_dir():
+            raise SystemExit("error: bundled codex-cli-helper skill is unavailable")
+        with tempfile.TemporaryDirectory(prefix=f".{SKILL_NAME}.", dir=directory) as temp_dir:
+            staged = Path(temp_dir) / SKILL_NAME
+            _copy_resource_tree(source, staged)
+            if destination.exists() or destination.is_symlink():
+                if destination.is_symlink() or not destination.is_dir():
+                    destination.unlink()
+                else:
+                    shutil.rmtree(destination)
+            os.replace(staged, destination)
+    except OSError as exc:
+        raise SystemExit(f"error: could not install skill at {destination}: {exc}") from exc
+
+    result = {"skill": SKILL_NAME, "directory": str(directory), "path": str(destination)}
+    if json_output:
+        print(json.dumps(result, sort_keys=True))
+    else:
+        print(f"Installed {SKILL_NAME} skill at {destination}")
 
 
 if __name__ == "__main__":

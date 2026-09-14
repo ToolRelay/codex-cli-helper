@@ -148,3 +148,21 @@ def test_start_list_delete_task_via_cli(tmp_path: Path, fake_app_server: tuple[P
         "--json",
     )
     assert json.loads(listed_again.stdout)["tasks"] == []
+
+
+def test_install_bundled_skill_via_cli(tmp_path: Path) -> None:
+    repo_root = Path(__file__).parents[1]
+    skills_dir = tmp_path / "skills"
+    installed = run_cli(
+        repo_root,
+        "install-skill",
+        "--directory",
+        str(skills_dir),
+        "--json",
+    )
+    result = json.loads(installed.stdout)
+    skill_dir = skills_dir / "codex-cli-helper"
+    assert result["path"] == str(skill_dir)
+    assert (skill_dir / "SKILL.md").is_file()
+    assert (skill_dir / "agents" / "openai.yaml").is_file()
+    assert "codex-cli-helper" in (skill_dir / "SKILL.md").read_text(encoding="utf-8")

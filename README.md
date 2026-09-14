@@ -7,7 +7,8 @@ workflow policy, scheduling, and project decisions.
 
 The initial release provides a small task lifecycle surface: `start-task`
 creates a durable thread and starts its first turn, `list-tasks` reads task
-summaries, and `delete-task` permanently removes a task. The package is
+summaries, `delete-task` permanently removes a task, and `install-skill` copies
+the bundled Codex skill into a selected skills directory. The package is
 structured so additional app-server capabilities can be added without
 coupling the helper to a particular project management system.
 
@@ -81,6 +82,16 @@ codex-cli-helper delete-task --thread-id THREAD_ID --yes
 
 Deletion is permanent, so `--yes` is required. Add `--json` when the result is
 being consumed by another program.
+
+### Install the bundled skill
+
+```bash
+codex-cli-helper install-skill --directory /root/.agents/skills
+```
+
+This creates `/root/.agents/skills/codex-cli-helper` containing the packaged
+`SKILL.md` and UI metadata. Use `--force` to replace an existing copy when
+updating the skill. The command does not contact the app-server.
 
 The default socket is
 `/root/.codex/app-server-control/app-server-control.sock`. Override it with

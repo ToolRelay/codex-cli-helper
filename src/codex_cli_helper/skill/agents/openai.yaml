@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex CLI Helper"
+  short_description: "Use the local Codex app-server task lifecycle CLI"
+  default_prompt: "Use $codex-cli-helper when managing Codex app-server tasks through the local CLI."

@@ -11,10 +11,12 @@ Scriptable local tools for the Codex app-server.
 - [`start-task`](#codex-cli-helper-start-task)
 - [`list-tasks`](#codex-cli-helper-list-tasks)
 - [`delete-task`](#codex-cli-helper-delete-task)
+- [`install-skill`](#codex-cli-helper-install-skill)
 
 **Commands**:
 
 * [`delete-task`](#codex-cli-helper-delete-task): Permanently delete a durable Codex task through the app-server.
+* [`install-skill`](#codex-cli-helper-install-skill): Install the bundled Codex skill under a selected skills directory.
 * [`list-tasks`](#codex-cli-helper-list-tasks): List durable Codex tasks known to the app-server.
 * [`start-task`](#codex-cli-helper-start-task): Create a durable Codex thread and start its first turn.
 
@@ -89,4 +91,18 @@ Permanently delete a durable Codex task through the app-server.
 * `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
 * `--yes, --no-yes`: Confirm permanent deletion. *[default: False]*
 * `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
+* `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
+
+## codex-cli-helper install-skill
+
+```console
+codex-cli-helper install-skill --directory PATH [OPTIONS]
+```
+
+Install the bundled Codex skill under a selected skills directory.
+
+**Parameters**:
+
+* `--directory`: Parent directory in which to install the bundled skill. **[required]**
+* `--force, --no-force`: Replace an existing codex-cli-helper skill directory. *[default: False]*
 * `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
