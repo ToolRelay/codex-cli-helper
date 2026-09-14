@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codex-cli-helper"
-version = "0.1.0"
+version = "0.0.0"  # Unreleased baseline; semantic-release creates v0.1.0.
 description = "Small local Python toolkit for Codex app-server workflows"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,9 @@ dependencies = [
 dev = [
   "pytest>=8,<9",
 ]
+build = [
+  "pyinstaller>=6,<7",
+]
 
 [project.scripts]
 codex-cli-helper = "codex_cli_helper.cli:app"
@@ -28,3 +31,11 @@ packages = ["src/codex_cli_helper"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.semantic_release]
+commit_parser = "conventional"
+allow_zero_version = true
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/codex_cli_helper/__init__.py:__version__"]
+commit_message = "chore(release): {version}"
+tag_format = "v{version}"

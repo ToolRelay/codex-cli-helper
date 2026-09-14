@@ -1,3 +1,3 @@
 """Local helpers for the Codex app-server."""
 
-__version__ = "0.1.0"
+__version__ = "0.0.0"

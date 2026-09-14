@@ -17,10 +17,31 @@ generated reference documentation with little boilerplate.
 
 ## Install
 
+For development, install an editable package in an isolated environment:
+
 ```bash
 python -m venv .venv
 .venv/bin/pip install -e '.[dev]'
 ```
+
+For normal use, download the executable for your operating system from the
+repository's GitHub Release and put it on your `PATH`. For example, on
+Linux x86-64:
+
+```bash
+mkdir -p ~/.local/bin
+curl -fL \
+  https://github.com/ToolRelay/codex-cli-helper/releases/latest/download/codex-cli-helper-linux-x86_64 \
+  -o ~/.local/bin/codex-cli-helper
+chmod +x ~/.local/bin/codex-cli-helper
+```
+
+The release executable contains the Python runtime and application
+dependencies; Python and a virtual environment are not required on the target
+machine. Release assets are built independently for Linux x86-64, Linux
+ARM64, macOS Intel, macOS Apple Silicon, and Windows x86-64. Verify the
+matching `.sha256` file before installing when integrity verification is
+required.
 
 ## Task lifecycle commands
 
@@ -76,6 +97,25 @@ not impose project layout, branching, or workflow policy.
 PYTHONPATH=src cyclopts generate-docs src/codex_cli_helper/cli.py \
   --output docs/cli.md --usage-name codex-cli-helper
 ```
+
+## Releases
+
+Commits merged to `main` use the Conventional Commits format. The release
+workflow runs tests, uses Python Semantic Release to determine the next SemVer
+version, updates `pyproject.toml` and the changelog, creates a `v<version>`
+tag and GitHub Release, then attaches the platform executables and checksums.
+
+Examples:
+
+```text
+fix: handle a closed app-server connection       # patch release
+feat: add task archival                          # minor release
+feat!: change the task output contract           # major release
+```
+
+The development install is intentionally separate from release installation:
+the former is for editing and testing source, while the latter is a portable
+single-file executable suitable for placing in a global `bin` directory.
 
 ## Design scope
 
