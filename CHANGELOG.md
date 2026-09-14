@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.1.2 (2026-09-14)
+
+### Bug Fixes
+
+- **ci**: Upload release assets without checkout
+  ([`aa0ee9e`](https://github.com/ToolRelay/codex-cli-helper/commit/aa0ee9ed3ad49f73d3fe062b40be87d1962aeac7))
+
+
 ## v0.1.1 (2026-09-14)
 
 ### Bug Fixes
