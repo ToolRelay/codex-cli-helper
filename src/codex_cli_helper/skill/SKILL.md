@@ -15,7 +15,7 @@ Codex's SQLite databases directly.
 Use the installed `codex-cli-helper` executable:
 
 ```bash
-codex-cli-helper start-task --cwd PROJECT_DIR --prompt 'Complete the requested work.' --json
+codex-cli-helper start-task --cwd PROJECT_DIR --title 'A concise task title' --prompt 'Complete the requested work.' --json
 codex-cli-helper rename-task --thread-id THREAD_ID --title 'A concise task title' --json
 codex-cli-helper queue-message --thread-id THREAD_ID --message 'Continue with the review feedback.' --json
 codex-cli-helper list-tasks --cwd PROJECT_DIR --json
