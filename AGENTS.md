@@ -15,6 +15,16 @@ modular, typed, and easy to extend as additional commands are introduced.
 - Keep generated CLI documentation synchronized with typed signatures and
   docstrings.
 
+## Task workflow
+
+- The dispatcher starts the session in this repository and supplies one issue;
+  it does not create the worktree.
+- Before editing, create a unique task branch and dedicated Git worktree under
+  the repository's sibling `.worktrees` directory. Do all edits, tests, and
+  commits there; never modify the shared checkout or another task's worktree.
+- Stay within the issue's acceptance criteria and leave the committed branch
+  ready for review. Do not merge PRs, close issues, or change Project status.
+
 ## Validation
 
 Before committing, run the test suite, compile the package, check `--help`, and
