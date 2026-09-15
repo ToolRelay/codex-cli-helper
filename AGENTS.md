@@ -17,13 +17,13 @@ modular, typed, and easy to extend as additional commands are introduced.
 
 ## Task workflow
 
-- The dispatcher starts the session in this repository and supplies one issue;
-  it does not create the worktree.
-- Before editing, create a unique task branch and dedicated Git worktree under
-  the repository's sibling `.worktrees` directory. Do all edits, tests, and
-  commits there; never modify the shared checkout or another task's worktree.
+- Every task must use a unique task branch and dedicated Git worktree under the
+  repository's sibling `.worktrees` directory, regardless of how the task was
+  started. Create it before editing; never modify the shared checkout or
+  another task's worktree.
 - Stay within the issue's acceptance criteria and leave the committed branch
-  ready for review. Do not merge PRs, close issues, or change Project status.
+  ready for review. Do not merge, close the ticket, change workflow state, or
+  start follow-on work.
 
 ## Validation
 
