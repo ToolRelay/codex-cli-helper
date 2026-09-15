@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.2.1 (2026-09-15)
+
+### Bug Fixes
+
+- Match Codex app-server websocket handshake
+  ([`6216ef5`](https://github.com/ToolRelay/codex-cli-helper/commit/6216ef55fbf5328db4dab35c19358e64ce73b173))
+
+
 ## v0.2.0 (2026-09-14)
 
 ### Documentation
