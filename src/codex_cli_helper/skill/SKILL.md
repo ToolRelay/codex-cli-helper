@@ -24,7 +24,9 @@ codex-cli-helper delete-task --thread-id THREAD_ID --yes --json
 Pass `--socket SOCKET_PATH` when the app-server does not use its default local
 socket. Keep prompts complete and actionable; `start-task` creates a durable
 thread and starts its first turn, then returns while the app-server continues
-the task.
+the task. Omit `--model`, `--effort`, `--sandbox`, and `--approval-policy` to
+inherit the active Codex configuration; use those options only for intentional
+one-task overrides.
 
 `list-tasks` returns active interactive tasks by default. Add
 `--include-non-interactive` when exec or other non-interactive sources must be

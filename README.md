@@ -52,10 +52,22 @@ required.
 ```bash
 codex-cli-helper start-task \
   --cwd /path/to/project \
-  --model gpt-5.6-sol \
-  --sandbox danger-full-access \
-  --approval-policy never \
   --prompt 'Work on the requested task and leave the result ready for review.'
+```
+
+By default, task creation inherits the active Codex configuration for the
+model, reasoning effort, sandbox, approval policy, provider fallback, and the
+current user's conventional app-server socket. Use an option only for a
+one-task override:
+
+```bash
+codex-cli-helper start-task \
+  --cwd /path/to/project \
+  --model gpt-5.6-sol \
+  --effort high \
+  --sandbox workspace-write \
+  --approval-policy on-request \
+  --prompt 'Investigate and implement the requested change.'
 ```
 
 Use `--json` for scripting:
@@ -121,8 +133,8 @@ This creates `/root/.agents/skills/codex-cli-helper` containing the packaged
 `SKILL.md` and UI metadata. Use `--force` to replace an existing copy when
 updating the skill. The command does not contact the app-server.
 
-The default socket is
-`/root/.codex/app-server-control/app-server-control.sock`. Override it with
+The default socket is resolved from `$CODEX_HOME` when set, otherwise from
+`~/.codex/app-server-control/app-server-control.sock`. Override it with
 `--socket` when the daemon uses another Unix socket. The initialization
 handshake uses the local daemon's existing Codex login; no API key is stored or
 passed by this tool.

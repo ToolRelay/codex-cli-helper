@@ -22,7 +22,8 @@ class StartedTask:
     thread_id: str
     turn_id: str | None
     cwd: str
-    model: str
+    model: str | None
+    effort: str | None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -30,6 +31,7 @@ class StartedTask:
             "turnId": self.turn_id,
             "cwd": self.cwd,
             "model": self.model,
+            "effort": self.effort,
         }
 
 
@@ -203,31 +205,36 @@ class CodexAppServer:
         *,
         cwd: Path,
         prompt: str,
-        model: str,
-        sandbox: str,
-        approval_policy: str,
+        model: str | None,
+        effort: str | None,
+        sandbox: str | None,
+        approval_policy: str | None,
         thread_source: str,
         session_start_source: str,
         history_mode: str,
         runtime_workspace_roots: list[Path],
         model_provider: str | None,
-        allow_provider_model_fallback: bool,
+        allow_provider_model_fallback: bool | None,
     ) -> StartedTask:
         """Create a durable thread and start its first turn."""
 
         thread_params: dict[str, Any] = {
             "cwd": str(cwd),
             "runtimeWorkspaceRoots": [str(path) for path in runtime_workspace_roots],
-            "model": model,
-            "allowProviderModelFallback": allow_provider_model_fallback,
-            "sandbox": sandbox,
-            "approvalPolicy": approval_policy,
             "threadSource": thread_source,
             "sessionStartSource": session_start_source,
             "historyMode": history_mode,
         }
-        if model_provider is not None:
-            thread_params["modelProvider"] = model_provider
+        optional_thread_params = {
+            "model": model,
+            "allowProviderModelFallback": allow_provider_model_fallback,
+            "sandbox": sandbox,
+            "approvalPolicy": approval_policy,
+            "modelProvider": model_provider,
+        }
+        thread_params.update(
+            {key: value for key, value in optional_thread_params.items() if value is not None}
+        )
 
         thread_result = self._request("thread/start", thread_params)
         thread = thread_result.get("thread")
@@ -235,23 +242,42 @@ class CodexAppServer:
             raise AppServerError("thread/start returned no thread id")
         thread_id = thread["id"]
 
-        turn_result = self._request(
-            "turn/start",
-            {
-                "threadId": thread_id,
-                "clientUserMessageId": str(uuid.uuid4()),
-                "input": [{"type": "text", "text": prompt}],
-                "model": model,
-                "cwd": str(cwd),
-                "approvalPolicy": approval_policy,
-                "runtimeWorkspaceRoots": [str(path) for path in runtime_workspace_roots],
-            },
-        )
+        effective_model = thread.get("model")
+        effective_effort = thread.get("reasoningEffort")
+        if effective_model is not None and not isinstance(effective_model, str):
+            raise AppServerError("thread/start returned an invalid model")
+        if effective_effort is not None and not isinstance(effective_effort, str):
+            raise AppServerError("thread/start returned an invalid reasoning effort")
+
+        if effort is not None:
+            self._request(
+                "thread/settings/update",
+                {"threadId": thread_id, "effort": effort},
+            )
+            self._wait_for_notification(
+                "thread/settings/updated",
+                lambda notification: isinstance(notification.get("params"), dict)
+                and notification["params"].get("threadId") == thread_id,
+            )
+            effective_effort = effort
+
+        turn_params: dict[str, Any] = {
+            "threadId": thread_id,
+            "clientUserMessageId": str(uuid.uuid4()),
+            "input": [{"type": "text", "text": prompt}],
+            "cwd": str(cwd),
+            "runtimeWorkspaceRoots": [str(path) for path in runtime_workspace_roots],
+        }
+        if model is not None:
+            turn_params["model"] = model
+        if approval_policy is not None:
+            turn_params["approvalPolicy"] = approval_policy
+        turn_result = self._request("turn/start", turn_params)
         turn = turn_result.get("turn")
         turn_id = turn.get("id") if isinstance(turn, dict) else None
         if turn_id is not None and not isinstance(turn_id, str):
             raise AppServerError("turn/start returned an invalid turn id")
-        return StartedTask(thread_id, turn_id, str(cwd), model)
+        return StartedTask(thread_id, turn_id, str(cwd), effective_model, effective_effort)
 
     def list_tasks(
         self,

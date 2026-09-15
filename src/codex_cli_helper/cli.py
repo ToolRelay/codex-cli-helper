@@ -47,6 +47,13 @@ ALL_SOURCE_KINDS: tuple[SourceKind, ...] = (
 SKILL_NAME = "codex-cli-helper"
 
 
+def default_socket_path() -> Path:
+    """Return the conventional control socket for the current Codex home."""
+
+    codex_home = Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
+    return codex_home / "app-server-control" / "app-server-control.sock"
+
+
 app = App(
     name="codex-cli-helper",
     version=__version__,
@@ -71,10 +78,23 @@ def start_task(
             name="--socket",
             help="Unix socket exposed by the running Codex app-server daemon.",
         ),
-    ] = Path("/root/.codex/app-server-control/app-server-control.sock"),
-    model: Annotated[str, Parameter(help="Exact Codex model to use.")] = "gpt-5.6-sol",
-    sandbox: Literal["read-only", "workspace-write", "danger-full-access"] = "danger-full-access",
-    approval_policy: Literal["untrusted", "on-request", "never"] = "never",
+    ] = default_socket_path(),
+    model: Annotated[
+        str | None,
+        Parameter(help="Optional model override; omit to use the active Codex configuration."),
+    ] = None,
+    effort: Annotated[
+        ReasoningEffort | None,
+        Parameter(help="Optional reasoning-effort override; omit to use the active Codex configuration."),
+    ] = None,
+    sandbox: Annotated[
+        Literal["read-only", "workspace-write", "danger-full-access"] | None,
+        Parameter(help="Optional sandbox override; omit to use the active Codex configuration."),
+    ] = None,
+    approval_policy: Annotated[
+        Literal["untrusted", "on-request", "never"] | None,
+        Parameter(help="Optional approval-policy override; omit to use the active Codex configuration."),
+    ] = None,
     thread_source: Annotated[str, Parameter(help="Analytics/source classification for the thread.")] = "toolrelay",
     session_start_source: Literal["startup", "clear"] = "startup",
     history_mode: Literal["legacy", "paginated"] = "paginated",
@@ -87,7 +107,10 @@ def start_task(
         ),
     ] = (),
     model_provider: Annotated[str | None, Parameter(help="Optional model provider identifier.")] = None,
-    allow_provider_model_fallback: bool = False,
+    allow_provider_model_fallback: Annotated[
+        bool | None,
+        Parameter(help="Allow provider model fallback; omit to use the app-server default."),
+    ] = None,
     timeout: Annotated[float, Parameter(help="Seconds to wait for socket responses.")] = 30.0,
     json_output: Annotated[
         bool,
@@ -98,7 +121,9 @@ def start_task(
 
     The command performs the app-server initialization handshake, so it uses the
     daemon's existing local Codex authentication. It never stores or asks for an
-    API key. The task continues in the daemon after this process exits.
+    API key. Model, effort, sandbox, and approval policy inherit the active
+    Codex configuration unless explicitly overridden. The task continues in the
+    daemon after this process exits.
 
     Parameters
     ----------
@@ -121,6 +146,7 @@ def start_task(
                 cwd=cwd,
                 prompt=prompt,
                 model=model,
+                effort=effort,
                 sandbox=sandbox,
                 approval_policy=approval_policy,
                 thread_source=thread_source,
@@ -138,7 +164,10 @@ def start_task(
     else:
         print(f"Created Codex task {task.thread_id}")
         print(f"Turn: {task.turn_id or 'not returned'}")
-        print(f"Model: {task.model}")
+        if task.model is not None:
+            print(f"Model: {task.model}")
+        if task.effort is not None:
+            print(f"Reasoning effort: {task.effort}")
         print(f"Working directory: {task.cwd}")
 
 
@@ -151,7 +180,7 @@ def list_tasks(
             name="--socket",
             help="Unix socket exposed by the running Codex app-server daemon.",
         ),
-    ] = Path("/root/.codex/app-server-control/app-server-control.sock"),
+    ] = default_socket_path(),
     limit: Annotated[int, Parameter(help="Maximum number of tasks to return.")] = 100,
     cursor: Annotated[str | None, Parameter(help="Continue from a cursor returned by a previous page.")] = None,
     cwd: Annotated[Path | None, Parameter(help="Only return tasks whose working directory matches this path.")] = None,
@@ -247,7 +276,7 @@ def delete_task(
             name="--socket",
             help="Unix socket exposed by the running Codex app-server daemon.",
         ),
-    ] = Path("/root/.codex/app-server-control/app-server-control.sock"),
+    ] = default_socket_path(),
     yes: Annotated[
         bool,
         Parameter(name="--yes", help="Confirm permanent deletion."),
@@ -291,7 +320,7 @@ def queue_message(
             name="--socket",
             help="Unix socket exposed by the running Codex app-server daemon.",
         ),
-    ] = Path("/root/.codex/app-server-control/app-server-control.sock"),
+    ] = default_socket_path(),
     model: Annotated[
         str | None,
         Parameter(help="Optional model override for this and subsequent task turns."),

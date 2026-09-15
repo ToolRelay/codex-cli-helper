@@ -32,22 +32,25 @@ Create a durable Codex thread and start its first turn.
 
 The command performs the app-server initialization handshake, so it uses the
 daemon's existing local Codex authentication. It never stores or asks for an
-API key. The task continues in the daemon after this process exits.
+API key. Model, effort, sandbox, and approval policy inherit the active
+Codex configuration unless explicitly overridden. The task continues in the
+daemon after this process exits.
 
 **Parameters**:
 
 * `--cwd`: Absolute working directory for the new task. **[required]**
 * `--prompt`: Initial task prompt sent to Codex. **[required]**
 * `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
-* `--model`: Exact Codex model to use. *[default: gpt-5.6-sol]*
-* `--sandbox`: *[choices: read-only, workspace-write, danger-full-access]* *[default: danger-full-access]*
-* `--approval-policy`: *[choices: untrusted, on-request, never]* *[default: never]*
+* `--model`: Optional model override; omit to use the active Codex configuration.
+* `--effort`: Optional reasoning-effort override; omit to use the active Codex configuration. *[choices: low, medium, high, xhigh, max, ultra]*
+* `--sandbox`: Optional sandbox override; omit to use the active Codex configuration. *[choices: read-only, workspace-write, danger-full-access]*
+* `--approval-policy`: Optional approval-policy override; omit to use the active Codex configuration. *[choices: untrusted, on-request, never]*
 * `--thread-source`: Analytics/source classification for the thread. *[default: toolrelay]*
 * `--session-start-source`: *[choices: startup, clear]* *[default: startup]*
 * `--history-mode`: *[choices: legacy, paginated]* *[default: paginated]*
 * `--runtime-workspace-root`: Runtime workspace root; repeat for additional roots (defaults to --cwd). *[default: ()]*
 * `--model-provider`: Optional model provider identifier.
-* `--allow-provider-model-fallback, --no-allow-provider-model-fallback`: *[default: False]*
+* `--allow-provider-model-fallback, --no-allow-provider-model-fallback`: Allow provider model fallback; omit to use the app-server default.
 * `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
 * `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
 

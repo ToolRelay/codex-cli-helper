@@ -55,18 +55,16 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
         str(repo_root.parent),
         "--socket",
         str(socket_path),
-        "--model",
-        "gpt-5.6-sol",
-        "--sandbox",
-        "read-only",
-        "--approval-policy",
-        "never",
+        "--effort",
+        "high",
         "--prompt",
         f"{marker}. Do not modify files or use tools; reply with a short confirmation.",
         "--json",
     )
     started = json.loads(start.stdout)
     thread_id = started["threadId"]
+    assert isinstance(started["model"], str) and started["model"]
+    assert started["effort"] == "high"
 
     try:
         matching: list[dict[str, object]] = []
