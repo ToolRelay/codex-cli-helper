@@ -5,12 +5,13 @@ app-server. It is intentionally a thin protocol adapter: commands expose
 Codex capabilities in a scriptable form while callers retain ownership of
 workflow policy, scheduling, and project decisions.
 
-The initial release provides a small task lifecycle surface: `start-task`
-creates a durable thread and starts its first turn, `list-tasks` reads task
-summaries, `delete-task` permanently removes a task, and `install-skill` copies
-the bundled Codex skill into a selected skills directory. The package is
-structured so additional app-server capabilities can be added without
-coupling the helper to a particular project management system.
+The CLI provides a focused task lifecycle surface: `start-task` creates a
+durable thread and starts its first turn, `queue-message` sends a follow-up to
+an existing thread, `list-tasks` reads task summaries, `delete-task`
+permanently removes a task, and `install-skill` copies the bundled Codex skill
+into a selected skills directory. The package is structured so additional
+app-server capabilities can be added without coupling the helper to a
+particular project management system.
 
 The CLI uses [Cyclopts](https://cyclopts.readthedocs.io/) because typed
 signatures and docstrings provide built-in help, shell completion, and
@@ -73,6 +74,33 @@ codex-cli-helper list-tasks --include-non-interactive --json
 By default, `list-tasks` returns active (non-archived) tasks. Use
 `--archived archived` to list archived tasks, `--source-kind` to select one or
 more protocol source kinds, and `--cursor` to continue a paginated response.
+
+### Queue a follow-up message
+
+```bash
+codex-cli-helper queue-message \
+  --thread-id THREAD_ID \
+  --message 'Please create or update the pull request and report its URL.'
+```
+
+The command reads the task status through the app-server. If the task is
+`notLoaded`, it resumes the thread without starting a turn, then queues the
+message. If it is already loaded, it queues directly. This means the command
+works consistently for both persisted and in-memory tasks.
+
+Omit the optional `--model` and `--effort` flags to preserve the thread's
+stored settings. When supplied, the helper applies those settings before it
+submits the message, so the queued turn uses the requested model and reasoning
+effort:
+
+```bash
+codex-cli-helper queue-message \
+  --thread-id THREAD_ID \
+  --model gpt-5.6-sol \
+  --effort high \
+  --message 'Continue with the review feedback.' \
+  --json
+```
 
 ### Delete a task
 
@@ -146,6 +174,7 @@ single-file executable suitable for placing in a global `bin` directory.
 This targets the Codex app-server protocol shipped with the local CLI. The
 protocol is version-sensitive, so errors are surfaced instead of silently
 falling back to a different model or transport. The current implementation
-uses `initialize`, `thread/start`, `turn/start`, `thread/list`, and
+uses `initialize`, `thread/start`, `thread/read`, `thread/resume`,
+`thread/settings/update`, `thread/queue/add`, `turn/start`, `thread/list`, and
 `thread/delete`; future commands can build on the same client without changing
 the authentication or transport boundary.

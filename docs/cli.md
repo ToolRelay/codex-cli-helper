@@ -11,6 +11,7 @@ Scriptable local tools for the Codex app-server.
 - [`start-task`](#codex-cli-helper-start-task)
 - [`list-tasks`](#codex-cli-helper-list-tasks)
 - [`delete-task`](#codex-cli-helper-delete-task)
+- [`queue-message`](#codex-cli-helper-queue-message)
 - [`install-skill`](#codex-cli-helper-install-skill)
 
 **Commands**:
@@ -18,6 +19,7 @@ Scriptable local tools for the Codex app-server.
 * [`delete-task`](#codex-cli-helper-delete-task): Permanently delete a durable Codex task through the app-server.
 * [`install-skill`](#codex-cli-helper-install-skill): Install the bundled Codex skill under a selected skills directory.
 * [`list-tasks`](#codex-cli-helper-list-tasks): List durable Codex tasks known to the app-server.
+* [`queue-message`](#codex-cli-helper-queue-message): Load an existing task if needed, then queue one follow-up message.
 * [`start-task`](#codex-cli-helper-start-task): Create a durable Codex thread and start its first turn.
 
 ## codex-cli-helper start-task
@@ -90,6 +92,28 @@ Permanently delete a durable Codex task through the app-server.
 * `--thread-id`: Identifier of the task to delete. **[required]**
 * `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
 * `--yes, --no-yes`: Confirm permanent deletion. *[default: False]*
+* `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
+* `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
+
+## codex-cli-helper queue-message
+
+```console
+codex-cli-helper queue-message --thread-id STR --message STR [OPTIONS]
+```
+
+Load an existing task if needed, then queue one follow-up message.
+
+An unloaded task is resumed without starting a turn before the message is
+queued. Omitting ``--model`` and ``--effort`` preserves persisted settings;
+supplied overrides are applied before the queued turn can run.
+
+**Parameters**:
+
+* `--thread-id`: Identifier of the existing Codex task. **[required]**
+* `--message`: User message to append to the task queue. **[required]**
+* `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
+* `--model`: Optional model override for this and subsequent task turns.
+* `--effort`: Optional reasoning-effort override for this and subsequent task turns. *[choices: low, medium, high, xhigh, max, ultra]*
 * `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
 * `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
 

@@ -1,6 +1,6 @@
 ---
 name: codex-cli-helper
-description: Use the local codex-cli-helper binary when creating, listing, or deleting durable Codex app-server tasks through the configured Unix socket.
+description: Use the local codex-cli-helper binary to create, queue, list, or delete durable Codex app-server tasks through the configured Unix socket.
 ---
 
 # Codex CLI Helper
@@ -16,6 +16,7 @@ Use the installed `codex-cli-helper` executable:
 
 ```bash
 codex-cli-helper start-task --cwd PROJECT_DIR --prompt 'Complete the requested work.' --json
+codex-cli-helper queue-message --thread-id THREAD_ID --message 'Continue with the review feedback.' --json
 codex-cli-helper list-tasks --cwd PROJECT_DIR --json
 codex-cli-helper delete-task --thread-id THREAD_ID --yes --json
 ```
@@ -30,6 +31,11 @@ the task.
 included. Use the returned `threadId` with `delete-task` only when permanent
 deletion has been explicitly requested; the command requires `--yes` as a
 second guard.
+
+`queue-message` reads task status first. For a `notLoaded` task it resumes the
+thread without starting a turn, then queues the message; loaded tasks are
+queued directly. Omit `--model` and `--effort` to preserve existing settings,
+or provide either flag to apply it before the queued turn runs.
 
 Prefer `--json` for automation and preserve the identifiers it returns. Treat
 the app-server response as authoritative: surface errors instead of retrying

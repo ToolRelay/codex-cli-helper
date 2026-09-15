@@ -31,6 +31,7 @@ SourceKind = Literal[
 ]
 SortKey = Literal["created_at", "updated_at", "recency_at", "section_position"]
 SortDirection = Literal["asc", "desc"]
+ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max", "ultra"]
 ALL_SOURCE_KINDS: tuple[SourceKind, ...] = (
     "cli",
     "vscode",
@@ -271,6 +272,70 @@ def delete_task(
         print(json.dumps(result, sort_keys=True))
     else:
         print(f"Deleted Codex task {thread_id}")
+
+
+@app.command
+def queue_message(
+    *,
+    thread_id: Annotated[
+        str,
+        Parameter(name="--thread-id", help="Identifier of the existing Codex task."),
+    ],
+    message: Annotated[
+        str,
+        Parameter(name="--message", help="User message to append to the task queue."),
+    ],
+    socket_path: Annotated[
+        Path,
+        Parameter(
+            name="--socket",
+            help="Unix socket exposed by the running Codex app-server daemon.",
+        ),
+    ] = Path("/root/.codex/app-server-control/app-server-control.sock"),
+    model: Annotated[
+        str | None,
+        Parameter(help="Optional model override for this and subsequent task turns."),
+    ] = None,
+    effort: Annotated[
+        ReasoningEffort | None,
+        Parameter(help="Optional reasoning-effort override for this and subsequent task turns."),
+    ] = None,
+    timeout: Annotated[float, Parameter(help="Seconds to wait for socket responses.")] = 30.0,
+    json_output: Annotated[
+        bool,
+        Parameter(name="--json", help="Print machine-readable JSON instead of human text."),
+    ] = False,
+) -> None:
+    """Load an existing task if needed, then queue one follow-up message.
+
+    An unloaded task is resumed without starting a turn before the message is
+    queued. Omitting ``--model`` and ``--effort`` preserves persisted settings;
+    supplied overrides are applied before the queued turn can run.
+    """
+
+    if not message.strip():
+        raise SystemExit("error: --message must not be empty")
+    try:
+        with CodexAppServer(socket_path.expanduser(), timeout=timeout) as client:
+            result = client.queue_message(
+                thread_id=thread_id,
+                message=message,
+                model=model,
+                effort=effort,
+            )
+    except AppServerError as exc:
+        raise SystemExit(f"error: {exc}") from exc
+
+    if json_output:
+        print(json.dumps(result.as_dict(), sort_keys=True))
+        return
+    print(f"Queued message {result.queued_submission_id} for Codex task {result.thread_id}")
+    print(f"Previous status: {result.previous_status}")
+    print(f"Resumed before queueing: {'yes' if result.resumed else 'no'}")
+    if result.model is not None:
+        print(f"Model: {result.model}")
+    if result.effort is not None:
+        print(f"Reasoning effort: {result.effort}")
 
 
 def _copy_resource_tree(source: Traversable, destination: Path) -> None:

@@ -30,8 +30,8 @@ def run_cli(repo_root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 
 
 @pytest.mark.live
-def test_start_list_delete_task_against_live_app_server() -> None:
-    """Create, observe, and delete one task through the real local daemon.
+def test_start_queue_list_delete_task_against_live_app_server() -> None:
+    """Create, queue a follow-up, observe, and delete one real Codex task.
 
     This test is deliberately opt-in because it creates a real durable Codex
     task and consumes a model turn. It never starts a second app-server.
@@ -88,6 +88,22 @@ def test_start_list_delete_task_against_live_app_server() -> None:
             time.sleep(0.25)
         assert matching, f"newly created task {thread_id} was not returned by thread/list"
         assert marker in (matching[0].get("preview") or "")
+
+        queued = run_cli(
+            repo_root,
+            "queue-message",
+            "--thread-id",
+            thread_id,
+            "--socket",
+            str(socket_path),
+            "--message",
+            f"{marker}. Confirm receipt without modifying files or using tools.",
+            "--json",
+        )
+        queue_result = json.loads(queued.stdout)
+        assert queue_result["threadId"] == thread_id
+        assert queue_result["queuedSubmissionId"]
+        assert queue_result["previousStatus"] in {"idle", "active", "notLoaded"}
     finally:
         deleted = run_cli(
             repo_root,
