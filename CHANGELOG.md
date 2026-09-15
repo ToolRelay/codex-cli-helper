@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.3.0 (2026-09-15)
+
+### Features
+
+- Queue messages for durable tasks
+  ([`bc3defd`](https://github.com/ToolRelay/codex-cli-helper/commit/bc3defdcf3c6dac9396d2392df287d227c34e4bf))
+
+
 ## v0.2.1 (2026-09-15)
 
 ### Bug Fixes

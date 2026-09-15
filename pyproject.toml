@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codex-cli-helper"
-version = "0.2.1"  # Updated automatically by semantic-release.
+version = "0.3.0"  # Updated automatically by semantic-release.
 description = "Small local Python toolkit for Codex app-server workflows"
 readme = "README.md"
 requires-python = ">=3.11"
