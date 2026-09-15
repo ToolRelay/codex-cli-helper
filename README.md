@@ -102,6 +102,19 @@ passed by this tool.
 `--cwd` is simply the directory in which Codex should operate. The helper does
 not impose project layout, branching, or workflow policy.
 
+### Live daemon integration test
+
+The lifecycle integration test uses the already-running local Codex app-server;
+it never starts a second daemon. Run it explicitly because it creates and then
+deletes a real task and consumes a model turn:
+
+```bash
+CODEX_CLI_HELPER_LIVE=1 python -m pytest -q -m live
+```
+
+The release workflow runs `-m "not live"` and therefore does not contact a
+developer's daemon or require Codex authentication.
+
 ## Generated documentation
 
 ```bash

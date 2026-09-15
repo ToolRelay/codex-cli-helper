@@ -31,6 +31,9 @@ packages = ["src/codex_cli_helper"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "live: uses the already-running local Codex app-server and creates a temporary task",
+]
 
 [tool.semantic_release]
 commit_parser = "conventional"

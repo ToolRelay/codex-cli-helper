@@ -64,6 +64,10 @@ class CodexAppServer:
                 str(self.socket_path),
                 open_timeout=self.timeout,
                 close_timeout=self.timeout,
+                # The Codex app-server doesn't negotiate permessage-deflate
+                # on its Unix WebSocket listener and closes the handshake if
+                # the extension is offered.
+                compression=None,
             )
         except OSError as exc:
             raise AppServerError(
