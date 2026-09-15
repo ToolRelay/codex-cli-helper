@@ -9,6 +9,7 @@ Scriptable local tools for the Codex app-server.
 ## Table of Contents
 
 - [`start-task`](#codex-cli-helper-start-task)
+- [`rename-task`](#codex-cli-helper-rename-task)
 - [`list-tasks`](#codex-cli-helper-list-tasks)
 - [`delete-task`](#codex-cli-helper-delete-task)
 - [`queue-message`](#codex-cli-helper-queue-message)
@@ -20,12 +21,13 @@ Scriptable local tools for the Codex app-server.
 * [`install-skill`](#codex-cli-helper-install-skill): Install the bundled Codex skill under a selected skills directory.
 * [`list-tasks`](#codex-cli-helper-list-tasks): List durable Codex tasks known to the app-server.
 * [`queue-message`](#codex-cli-helper-queue-message): Load an existing task if needed, then queue one follow-up message.
+* [`rename-task`](#codex-cli-helper-rename-task): Set the user-facing title of an existing durable Codex task.
 * [`start-task`](#codex-cli-helper-start-task): Create a durable Codex thread and start its first turn.
 
 ## codex-cli-helper start-task
 
 ```console
-codex-cli-helper start-task --cwd PATH --prompt STR [OPTIONS]
+codex-cli-helper start-task --cwd PATH --title STR --prompt STR [OPTIONS]
 ```
 
 Create a durable Codex thread and start its first turn.
@@ -39,6 +41,7 @@ daemon after this process exits.
 **Parameters**:
 
 * `--cwd`: Absolute working directory for the new task. **[required]**
+* `--title`: Concise user-facing title for the new task. **[required]**
 * `--prompt`: Initial task prompt sent to Codex. **[required]**
 * `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
 * `--model`: Optional model override; omit to use the active Codex configuration.
@@ -51,6 +54,22 @@ daemon after this process exits.
 * `--runtime-workspace-root`: Runtime workspace root; repeat for additional roots (defaults to --cwd). *[default: ()]*
 * `--model-provider`: Optional model provider identifier.
 * `--allow-provider-model-fallback, --no-allow-provider-model-fallback`: Allow provider model fallback; omit to use the app-server default.
+* `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
+* `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
+
+## codex-cli-helper rename-task
+
+```console
+codex-cli-helper rename-task --thread-id STR --title STR [OPTIONS]
+```
+
+Set the user-facing title of an existing durable Codex task.
+
+**Parameters**:
+
+* `--thread-id`: Identifier of the existing Codex task. **[required]**
+* `--title`: New concise user-facing title for the task. **[required]**
+* `--socket`: Unix socket exposed by the running Codex app-server daemon. *[default: /root/.codex/app-server-control/app-server-control.sock]*
 * `--timeout`: Seconds to wait for socket responses. *[default: 30.0]*
 * `--json, --no-json`: Print machine-readable JSON instead of human text. *[default: False]*
 

@@ -68,6 +68,10 @@ def start_task(
         Path,
         Parameter(name="--cwd", help="Absolute working directory for the new task."),
     ],
+    title: Annotated[
+        str,
+        Parameter(name="--title", help="Concise user-facing title for the new task."),
+    ],
     prompt: Annotated[
         str,
         Parameter(name="--prompt", help="Initial task prompt sent to Codex."),
@@ -129,6 +133,8 @@ def start_task(
     ----------
     cwd:
         Absolute project directory where the task should run.
+    title:
+        Concise user-facing title shown in Codex task lists and the UI.
     prompt:
         Complete initial instructions for the task.
     """
@@ -136,6 +142,8 @@ def start_task(
     cwd = cwd.expanduser().resolve()
     if not cwd.is_dir():
         raise SystemExit(f"error: --cwd is not an existing directory: {cwd}")
+    if not title.strip():
+        raise SystemExit("error: --title must not be empty")
     roots = [path.expanduser().resolve() for path in (runtime_workspace_root or (cwd,))]
     if any(not path.is_absolute() for path in roots):
         raise SystemExit("error: runtime workspace roots must be absolute paths")
@@ -144,6 +152,7 @@ def start_task(
         with CodexAppServer(socket_path.expanduser(), timeout=timeout) as client:
             task = client.start_task(
                 cwd=cwd,
+                title=title,
                 prompt=prompt,
                 model=model,
                 effort=effort,
@@ -163,12 +172,53 @@ def start_task(
         print(json.dumps(task.as_dict(), sort_keys=True))
     else:
         print(f"Created Codex task {task.thread_id}")
+        print(f"Title: {task.title}")
         print(f"Turn: {task.turn_id or 'not returned'}")
         if task.model is not None:
             print(f"Model: {task.model}")
         if task.effort is not None:
             print(f"Reasoning effort: {task.effort}")
         print(f"Working directory: {task.cwd}")
+
+
+@app.command
+def rename_task(
+    *,
+    thread_id: Annotated[
+        str,
+        Parameter(name="--thread-id", help="Identifier of the existing Codex task."),
+    ],
+    title: Annotated[
+        str,
+        Parameter(name="--title", help="New concise user-facing title for the task."),
+    ],
+    socket_path: Annotated[
+        Path,
+        Parameter(
+            name="--socket",
+            help="Unix socket exposed by the running Codex app-server daemon.",
+        ),
+    ] = default_socket_path(),
+    timeout: Annotated[float, Parameter(help="Seconds to wait for socket responses.")] = 30.0,
+    json_output: Annotated[
+        bool,
+        Parameter(name="--json", help="Print machine-readable JSON instead of human text."),
+    ] = False,
+) -> None:
+    """Set the user-facing title of an existing durable Codex task."""
+
+    if not title.strip():
+        raise SystemExit("error: --title must not be empty")
+    try:
+        with CodexAppServer(socket_path.expanduser(), timeout=timeout) as client:
+            result = client.rename_task(thread_id=thread_id, title=title)
+    except AppServerError as exc:
+        raise SystemExit(f"error: {exc}") from exc
+
+    if json_output:
+        print(json.dumps(result, sort_keys=True))
+    else:
+        print(f"Renamed Codex task {result['threadId']} to {result['title']}")
 
 
 @app.command

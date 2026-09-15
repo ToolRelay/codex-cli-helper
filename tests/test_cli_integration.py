@@ -48,6 +48,8 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
 
     repo_root = Path(__file__).parents[1]
     marker = f"codex-cli-helper live test {uuid.uuid4()}"
+    title = f"Live task {uuid.uuid4()}"
+    renamed_title = f"Renamed live task {uuid.uuid4()}"
     start = run_cli(
         repo_root,
         "start-task",
@@ -55,6 +57,8 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
         str(repo_root.parent),
         "--socket",
         str(socket_path),
+        "--title",
+        title,
         "--effort",
         "high",
         "--prompt",
@@ -63,6 +67,7 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
     )
     started = json.loads(start.stdout)
     thread_id = started["threadId"]
+    assert started["title"] == title
     assert isinstance(started["model"], str) and started["model"]
     assert started["effort"] == "high"
 
@@ -85,7 +90,42 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
                 break
             time.sleep(0.25)
         assert matching, f"newly created task {thread_id} was not returned by thread/list"
+        assert matching[0].get("name") == title
         assert marker in (matching[0].get("preview") or "")
+
+        renamed = run_cli(
+            repo_root,
+            "rename-task",
+            "--thread-id",
+            thread_id,
+            "--socket",
+            str(socket_path),
+            "--title",
+            renamed_title,
+            "--json",
+        )
+        assert json.loads(renamed.stdout) == {
+            "threadId": thread_id,
+            "title": renamed_title,
+        }
+
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            listed = run_cli(
+                repo_root,
+                "list-tasks",
+                "--cwd",
+                str(repo_root.parent),
+                "--socket",
+                str(socket_path),
+                "--json",
+            )
+            page = json.loads(listed.stdout)
+            matching = [task for task in page["tasks"] if task.get("id") == thread_id]
+            if matching and matching[0].get("name") == renamed_title:
+                break
+            time.sleep(0.25)
+        assert matching and matching[0].get("name") == renamed_title
 
         queued = run_cli(
             repo_root,

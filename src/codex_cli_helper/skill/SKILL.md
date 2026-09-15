@@ -1,6 +1,6 @@
 ---
 name: codex-cli-helper
-description: Use the local codex-cli-helper binary to create, queue, list, or delete durable Codex app-server tasks through the configured Unix socket.
+description: Use the local codex-cli-helper binary to create, rename, queue, list, or delete durable Codex app-server tasks through the configured Unix socket.
 ---
 
 # Codex CLI Helper
@@ -16,15 +16,17 @@ Use the installed `codex-cli-helper` executable:
 
 ```bash
 codex-cli-helper start-task --cwd PROJECT_DIR --prompt 'Complete the requested work.' --json
+codex-cli-helper rename-task --thread-id THREAD_ID --title 'A concise task title' --json
 codex-cli-helper queue-message --thread-id THREAD_ID --message 'Continue with the review feedback.' --json
 codex-cli-helper list-tasks --cwd PROJECT_DIR --json
 codex-cli-helper delete-task --thread-id THREAD_ID --yes --json
 ```
 
 Pass `--socket SOCKET_PATH` when the app-server does not use its default local
-socket. Keep prompts complete and actionable; `start-task` creates a durable
-thread and starts its first turn, then returns while the app-server continues
-the task. Omit `--model`, `--effort`, `--sandbox`, and `--approval-policy` to
+socket. Keep titles concise and prompts complete and actionable;
+`start-task` creates a durable thread, assigns its title, and starts its first
+turn, then returns while the app-server continues the task. Omit `--model`,
+`--effort`, `--sandbox`, and `--approval-policy` to
 inherit the active Codex configuration; use those options only for intentional
 one-task overrides.
 
@@ -33,6 +35,9 @@ one-task overrides.
 included. Use the returned `threadId` with `delete-task` only when permanent
 deletion has been explicitly requested; the command requires `--yes` as a
 second guard.
+
+`rename-task` updates the user-facing title of an existing task. It changes
+only the title and does not start or resume a turn.
 
 `queue-message` reads task status first. For a `notLoaded` task it resumes the
 thread without starting a turn, then queues the message; loaded tasks are

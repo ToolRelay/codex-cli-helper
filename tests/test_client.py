@@ -7,11 +7,12 @@ from codex_cli_helper.cli import default_socket_path
 
 
 def test_started_task_json_shape() -> None:
-    task = StartedTask("thread-1", "turn-1", "/workspace", "gpt-5.6-sol", "medium")
+    task = StartedTask("thread-1", "turn-1", "/workspace", "Implement the feature", "gpt-5.6-sol", "medium")
     assert task.as_dict() == {
         "threadId": "thread-1",
         "turnId": "turn-1",
         "cwd": "/workspace",
+        "title": "Implement the feature",
         "model": "gpt-5.6-sol",
         "effort": "medium",
     }
@@ -38,6 +39,8 @@ def test_start_task_omits_unset_configuration_overrides() -> None:
                     "reasoningEffort": "medium",
                 }
             }
+        if method == "thread/name/set":
+            return {}
         if method == "turn/start":
             return {"turn": {"id": "turn-1"}}
         raise AssertionError(f"unexpected method: {method}")
@@ -45,6 +48,7 @@ def test_start_task_omits_unset_configuration_overrides() -> None:
     client._request = request  # type: ignore[method-assign]
     result = client.start_task(
         cwd=Path("/workspace"),
+        title="Do the work",
         prompt="do the work",
         model=None,
         effort=None,
@@ -58,7 +62,7 @@ def test_start_task_omits_unset_configuration_overrides() -> None:
         allow_provider_model_fallback=None,
     )
 
-    assert [method for method, _ in calls] == ["thread/start", "turn/start"]
+    assert [method for method, _ in calls] == ["thread/start", "thread/name/set", "turn/start"]
     assert calls[0][1] == {
         "cwd": "/workspace",
         "runtimeWorkspaceRoots": ["/workspace"],
@@ -66,12 +70,14 @@ def test_start_task_omits_unset_configuration_overrides() -> None:
         "sessionStartSource": "startup",
         "historyMode": "paginated",
     }
-    assert "model" not in calls[1][1]
-    assert "approvalPolicy" not in calls[1][1]
+    assert calls[1][1] == {"threadId": "thread-1", "name": "Do the work"}
+    assert "model" not in calls[2][1]
+    assert "approvalPolicy" not in calls[2][1]
     assert result.as_dict() == {
         "threadId": "thread-1",
         "turnId": "turn-1",
         "cwd": "/workspace",
+        "title": "Do the work",
         "model": "configured-model",
         "effort": "medium",
     }
@@ -91,6 +97,8 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
                     "reasoningEffort": "medium",
                 }
             }
+        if method == "thread/name/set":
+            return {}
         if method == "thread/settings/update":
             return {}
         if method == "turn/start":
@@ -104,6 +112,7 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
     }
     result = client.start_task(
         cwd=Path("/workspace"),
+        title="Do the work",
         prompt="do the work",
         model="gpt-5.6-sol",
         effort="high",
@@ -119,6 +128,7 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
 
     assert [method for method, _ in calls] == [
         "thread/start",
+        "thread/name/set",
         "thread/settings/update",
         "turn/start",
     ]
@@ -134,10 +144,27 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
         "modelProvider": "openai",
         "allowProviderModelFallback": True,
     }
-    assert calls[1][1] == {"threadId": "thread-1", "effort": "high"}
-    assert calls[2][1]["model"] == "gpt-5.6-sol"
-    assert calls[2][1]["approvalPolicy"] == "on-request"
+    assert calls[1][1] == {"threadId": "thread-1", "name": "Do the work"}
+    assert calls[2][1] == {"threadId": "thread-1", "effort": "high"}
+    assert calls[3][1]["model"] == "gpt-5.6-sol"
+    assert calls[3][1]["approvalPolicy"] == "on-request"
     assert result.effort == "high"
+
+
+def test_rename_task_sets_protocol_name() -> None:
+    client = CodexAppServer(Path("/tmp/codex.sock"))
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def request(method: str, params: dict[str, object]) -> dict[str, object]:
+        calls.append((method, params))
+        return {}
+
+    client._request = request  # type: ignore[method-assign]
+    assert client.rename_task(thread_id="thread-1", title="A better title") == {
+        "threadId": "thread-1",
+        "title": "A better title",
+    }
+    assert calls == [("thread/name/set", {"threadId": "thread-1", "name": "A better title"})]
 
 
 def test_queue_message_resumes_an_unloaded_thread_before_queueing() -> None:

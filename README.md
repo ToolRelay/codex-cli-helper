@@ -6,12 +6,13 @@ Codex capabilities in a scriptable form while callers retain ownership of
 workflow policy, scheduling, and project decisions.
 
 The CLI provides a focused task lifecycle surface: `start-task` creates a
-durable thread and starts its first turn, `queue-message` sends a follow-up to
-an existing thread, `list-tasks` reads task summaries, `delete-task`
-permanently removes a task, and `install-skill` copies the bundled Codex skill
-into a selected skills directory. The package is structured so additional
-app-server capabilities can be added without coupling the helper to a
-particular project management system.
+durable thread, gives it a user-facing title, and starts its first turn;
+`rename-task` changes that title; `queue-message` sends a follow-up to an
+existing thread; `list-tasks` reads task summaries; `delete-task` permanently
+removes a task; and `install-skill` copies the bundled Codex skill into a
+selected skills directory. The package is structured so additional app-server
+capabilities can be added without coupling the helper to a particular project
+management system.
 
 The CLI uses [Cyclopts](https://cyclopts.readthedocs.io/) because typed
 signatures and docstrings provide built-in help, shell completion, and
@@ -52,6 +53,7 @@ required.
 ```bash
 codex-cli-helper start-task \
   --cwd /path/to/project \
+  --title 'Implement the feature' \
   --prompt 'Work on the requested task and leave the result ready for review.'
 ```
 
@@ -63,6 +65,7 @@ one-task override:
 ```bash
 codex-cli-helper start-task \
   --cwd /path/to/project \
+  --title 'Investigate the API' \
   --model gpt-5.6-sol \
   --effort high \
   --sandbox workspace-write \
@@ -73,8 +76,19 @@ codex-cli-helper start-task \
 Use `--json` for scripting:
 
 ```bash
-codex-cli-helper start-task --cwd /path/to/project --prompt '...' --json
+codex-cli-helper start-task --cwd /path/to/project --title 'Short title' --prompt '...' --json
 ```
+
+### Rename a task
+
+```bash
+codex-cli-helper rename-task \
+  --thread-id THREAD_ID \
+  --title 'A concise user-facing title'
+```
+
+The title is stored by the app-server and appears in task lists and the Codex
+UI. Renaming does not start or resume a turn.
 
 ### List tasks
 
@@ -186,7 +200,7 @@ single-file executable suitable for placing in a global `bin` directory.
 This targets the Codex app-server protocol shipped with the local CLI. The
 protocol is version-sensitive, so errors are surfaced instead of silently
 falling back to a different model or transport. The current implementation
-uses `initialize`, `thread/start`, `thread/read`, `thread/resume`,
+uses `initialize`, `thread/start`, `thread/name/set`, `thread/read`, `thread/resume`,
 `thread/settings/update`, `thread/queue/add`, `turn/start`, `thread/list`, and
 `thread/delete`; future commands can build on the same client without changing
 the authentication or transport boundary.

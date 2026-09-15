@@ -22,6 +22,7 @@ class StartedTask:
     thread_id: str
     turn_id: str | None
     cwd: str
+    title: str
     model: str | None
     effort: str | None
 
@@ -30,6 +31,7 @@ class StartedTask:
             "threadId": self.thread_id,
             "turnId": self.turn_id,
             "cwd": self.cwd,
+            "title": self.title,
             "model": self.model,
             "effort": self.effort,
         }
@@ -204,6 +206,7 @@ class CodexAppServer:
         self,
         *,
         cwd: Path,
+        title: str,
         prompt: str,
         model: str | None,
         effort: str | None,
@@ -242,6 +245,11 @@ class CodexAppServer:
             raise AppServerError("thread/start returned no thread id")
         thread_id = thread["id"]
 
+        # Thread creation does not accept a user-facing title. Set it through
+        # the same protocol method exposed by ``rename_task`` before starting
+        # the first turn.
+        self.rename_task(thread_id=thread_id, title=title)
+
         effective_model = thread.get("model")
         effective_effort = thread.get("reasoningEffort")
         if effective_model is not None and not isinstance(effective_model, str):
@@ -277,7 +285,7 @@ class CodexAppServer:
         turn_id = turn.get("id") if isinstance(turn, dict) else None
         if turn_id is not None and not isinstance(turn_id, str):
             raise AppServerError("turn/start returned an invalid turn id")
-        return StartedTask(thread_id, turn_id, str(cwd), effective_model, effective_effort)
+        return StartedTask(thread_id, turn_id, str(cwd), title, effective_model, effective_effort)
 
     def list_tasks(
         self,
@@ -338,6 +346,14 @@ class CodexAppServer:
 
         self._request("thread/delete", {"threadId": thread_id})
         return {"threadId": thread_id, "deleted": True}
+
+    def rename_task(self, *, thread_id: str, title: str) -> dict[str, str]:
+        """Set the user-facing name of a durable task through the app-server."""
+
+        if not title.strip():
+            raise AppServerError("title must not be empty")
+        self._request("thread/name/set", {"threadId": thread_id, "name": title})
+        return {"threadId": thread_id, "title": title}
 
     def queue_message(
         self,
