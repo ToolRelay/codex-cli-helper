@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.4.0 (2026-09-15)
+
+### Features
+
+- Inherit Codex task defaults
+  ([`43d163b`](https://github.com/ToolRelay/codex-cli-helper/commit/43d163bb4bab4f7e5eda1f67aced1ea6bfd3cd6e))
+
+
 ## v0.3.0 (2026-09-15)
 
 ### Features
