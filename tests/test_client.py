@@ -98,10 +98,6 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
         raise AssertionError(f"unexpected method: {method}")
 
     client._request = request  # type: ignore[method-assign]
-    client._wait_for_notification = lambda *_args: {  # type: ignore[method-assign]
-        "method": "thread/settings/updated",
-        "params": {"threadId": "thread-1"},
-    }
     result = client.start_task(
         cwd=Path("/workspace"),
         prompt="do the work",
@@ -136,6 +132,7 @@ def test_start_task_applies_explicit_overrides_before_first_turn() -> None:
     }
     assert calls[1][1] == {"threadId": "thread-1", "effort": "high"}
     assert calls[2][1]["model"] == "gpt-5.6-sol"
+    assert calls[2][1]["effort"] == "high"
     assert calls[2][1]["approvalPolicy"] == "on-request"
     assert result.effort == "high"
 
@@ -217,10 +214,6 @@ def test_queue_message_updates_loaded_thread_settings_before_queueing() -> None:
         raise AssertionError(f"unexpected method: {method}")
 
     client._request = request  # type: ignore[method-assign]
-    client._wait_for_notification = lambda *_args: {  # type: ignore[method-assign]
-        "method": "thread/settings/updated",
-        "params": {"threadId": "thread-1"},
-    }
     result = client.queue_message(
         thread_id="thread-1",
         message="continue the task",

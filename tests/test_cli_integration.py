@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from codex_cli_helper.client import CodexAppServer
+
 
 DEFAULT_SOCKET = Path("/root/.codex/app-server-control/app-server-control.sock")
 
@@ -67,6 +69,12 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
     assert started["effort"] == "high"
 
     try:
+        with CodexAppServer(socket_path) as client:
+            thread = client._request(  # noqa: SLF001 - verify server-persisted setting
+                "thread/read", {"threadId": thread_id, "includeTurns": False}
+            )["thread"]
+        assert thread["reasoningEffort"] == "high"
+
         matching: list[dict[str, object]] = []
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline:
@@ -96,12 +104,21 @@ def test_start_queue_list_delete_task_against_live_app_server() -> None:
             str(socket_path),
             "--message",
             f"{marker}. Confirm receipt without modifying files or using tools.",
+            "--effort",
+            "medium",
             "--json",
         )
         queue_result = json.loads(queued.stdout)
         assert queue_result["threadId"] == thread_id
         assert queue_result["queuedSubmissionId"]
         assert queue_result["previousStatus"] in {"idle", "active", "notLoaded"}
+        assert queue_result["effort"] == "medium"
+        assert queue_result["settingsUpdated"] is True
+        with CodexAppServer(socket_path) as client:
+            thread = client._request(  # noqa: SLF001 - verify server-persisted setting
+                "thread/read", {"threadId": thread_id, "includeTurns": False}
+            )["thread"]
+        assert thread["reasoningEffort"] == "medium"
     finally:
         deleted = run_cli(
             repo_root,
