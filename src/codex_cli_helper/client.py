@@ -6,7 +6,7 @@ import json
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from websockets.sync.client import ClientConnection, unix_connect
 
@@ -83,7 +83,6 @@ class CodexAppServer:
         self.timeout = timeout
         self._next_id = 1
         self._connection: ClientConnection | None = None
-        self._notifications: list[dict[str, Any]] = []
 
     def __enter__(self) -> "CodexAppServer":
         try:
@@ -152,26 +151,6 @@ class CodexAppServer:
             raise AppServerError("app-server returned a non-object JSON-RPC message")
         return message
 
-    def _save_notification(self, message: dict[str, Any]) -> None:
-        if isinstance(message.get("method"), str):
-            self._notifications.append(message)
-
-    def _wait_for_notification(
-        self,
-        method: str,
-        matches: Callable[[dict[str, Any]], bool],
-    ) -> dict[str, Any]:
-        """Wait for one notification while preserving unrelated notifications."""
-
-        for index, message in enumerate(self._notifications):
-            if message.get("method") == method and matches(message):
-                return self._notifications.pop(index)
-        while True:
-            message = self._receive_message()
-            if message.get("method") == method and matches(message):
-                return message
-            self._save_notification(message)
-
     def _request(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
         request_id = self._next_request_id()
         self._send(
@@ -189,7 +168,6 @@ class CodexAppServer:
                 raise AppServerError(f"{method}: {exc}") from exc
             if message.get("id") != request_id:
                 # Notifications and unrelated responses may be interleaved with a request.
-                self._save_notification(message)
                 continue
             if "error" in message:
                 error = message["error"]
@@ -250,14 +228,11 @@ class CodexAppServer:
             raise AppServerError("thread/start returned an invalid reasoning effort")
 
         if effort is not None:
+            # The successful RPC response confirms the setting; some app-server
+            # versions do not emit thread/settings/updated to this connection.
             self._request(
                 "thread/settings/update",
                 {"threadId": thread_id, "effort": effort},
-            )
-            self._wait_for_notification(
-                "thread/settings/updated",
-                lambda notification: isinstance(notification.get("params"), dict)
-                and notification["params"].get("threadId") == thread_id,
             )
             effective_effort = effort
 
@@ -270,6 +245,8 @@ class CodexAppServer:
         }
         if model is not None:
             turn_params["model"] = model
+        if effort is not None:
+            turn_params["effort"] = effort
         if approval_policy is not None:
             turn_params["approvalPolicy"] = approval_policy
         turn_result = self._request("turn/start", turn_params)
@@ -390,12 +367,9 @@ class CodexAppServer:
                 settings_params["model"] = model
             if effort is not None:
                 settings_params["effort"] = effort
+            # A successful response is sufficient; an updated notification is
+            # not guaranteed on every app-server version or connection.
             self._request("thread/settings/update", settings_params)
-            self._wait_for_notification(
-                "thread/settings/updated",
-                lambda notification: isinstance(notification.get("params"), dict)
-                and notification["params"].get("threadId") == thread_id,
-            )
 
         queued = self._request(
             "thread/queue/add",
