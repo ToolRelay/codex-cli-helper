@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v0.4.1 (2026-09-29)
+
+### Bug Fixes
+
+- Apply effort without waiting for an optional notification
+  ([`e61c11a`](https://github.com/ToolRelay/codex-cli-helper/commit/e61c11af289b786e58541abb7ceab32d33097512))
+
+### Documentation
+
+- Clarify dispatched task workflow
+  ([`927c2c6`](https://github.com/ToolRelay/codex-cli-helper/commit/927c2c6c1e53d4144f29cab000c81ed29f4aa579))
+
+- Make worktree isolation caller agnostic
+  ([`ed1efd7`](https://github.com/ToolRelay/codex-cli-helper/commit/ed1efd779f5ff79872bfe74d53d47dd0db9d3f71))
+
+
 ## v0.4.0 (2026-09-15)
 
 ### Features
