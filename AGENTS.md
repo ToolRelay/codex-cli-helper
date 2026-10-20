@@ -27,6 +27,13 @@ modular, typed, and easy to extend as additional commands are introduced.
 
 ## Validation
 
-Before committing, run the test suite, compile the package, check `--help`, and
-regenerate the CLI documentation. Keep commits focused and explain any
+Reuse compilation caches safely, prefer focused development checks and run
+lightweight checks independently of heavy validation where possible. Incorporate
+review fixes before final validation, then run all required acceptance checks
+against the exact frozen revision. Avoid redundant full-suite runs unless changes
+or failures justify them. Never share writable build targets between concurrent
+builds or treat cached artifacts as acceptance evidence.
+
+Final acceptance includes the test suite, package compilation, `--help` and
+generated CLI documentation checks. Keep commits focused and explain any
 version-sensitive protocol assumptions in the code or documentation.
